@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Data Analysis Application
 
 ## Overview
@@ -92,3 +93,6 @@ For any questions or support, please contact:
 ---
 Thank you for using this Data Analysis Application! Your feedback is valuable for further improvements.
 
+=======
+# Data_Analysis_App
+>>>>>>> 8d812edf03e06c7f6082504474a5657c91a12ec4
