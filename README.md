@@ -64,7 +64,7 @@ data_analysis_app/
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/AbdelhamidElyoussfi/Data_Analysis_App.git
 cd data_analysis_app
 ```
 
@@ -117,16 +117,9 @@ python manage.py makemigrations
 python manage.py migrate
 ```
 
-## Contributing
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/YourFeature`)
-3. Commit your changes (`git commit -m 'Add YourFeature'`)
-4. Push to the branch (`git push origin feature/YourFeature`)
-5. Open a Pull Request
-
 ## License
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Contact
-- Email: [your-email@example.com]
-- GitHub: [your-github-username]
+- Email: abdelhamidelyoussfii@gamil.com 
+- GitHub: AbdelhamiElyoussfi
