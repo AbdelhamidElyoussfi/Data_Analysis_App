@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <h2 class="card-title mb-4">
+            <i class="fas fa-calculator me-2"></i>Statistical Analysis
+        </h2>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <!-- Column Selection -->
+                <div class="mb-4">
+                    <label class="form-label"><strong>Analyze Specific Column(s):</strong></label>
+                    <select class="form-select mb-2" id="columnSelect" multiple>
+                        {% for column in numeric_columns %}
+                            <option value="{{ column }}" class="numeric-column">{{ column }}</option>
+                        {% endfor %}
+                        {% for column in categorical_columns %}
+                            <option value="{{ column }}" class="categorical-column" style="display: none;">{{ column }}</option>
+                        {% endfor %}
+                    </select>
+                    <button onclick="updateColumnStats()" class="btn btn-primary">Analyze Selected Columns</button>
+                </div>
+
+                <!-- Row Selection -->
+                <div class="mb-4">
+                    <label class="form-label"><strong>Analyze Specific Rows:</strong></label>
+                    <select class="form-select mb-2" id="rowRange">
+                        <option value="all">All Rows</option>
+                        <option value="first_10">First 10 Rows</option>
+                        <option value="last_10">Last 10 Rows</option>
+                    </select>
+                    <button onclick="updateRowStats()" class="btn btn-primary">Analyze Selected Rows</button>
+                </div>
+            </div>
+        </div>
+        
+        <ul class="nav nav-tabs mb-4" id="statsTabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#numerical" onclick="updateColumnVisibility('numeric')">Numerical Stats</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#categorical" onclick="updateColumnVisibility('categorical')">Categorical Stats</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#correlation">Correlations (Full Dataset)</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#missing">Missing Values</a>
+            </li>
+        </ul>
+        
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="numerical">
+                <div class="table-responsive">
+                    {{ numerical|safe }}
+                </div>
+            </div>
+            <div class="tab-pane fade" id="categorical">
+                <div class="table-responsive">
+                    {{ categorical|safe }}
+                </div>
+            </div>
+            <div class="tab-pane fade" id="correlation">
+                <div class="table-responsive">
+                    {{ correlation|safe }}
+                </div>
+            </div>
+            <div class="tab-pane fade" id="missing">
+                <div class="table-responsive">
+                    {{ missing_values|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table {
+        margin-bottom: 0;
+        width: 100%;
+    }
+    .table th {
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        z-index: 1;
+        vertical-align: middle;
+        text-align: center;
+    }
+    .table td {
+        vertical-align: middle;
+        text-align: center;
+    }
+    .table-responsive {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+    .form-select {
+        width: 100%;
+    }
+</style>
+
+<script>
+function updateColumnVisibility(type) {
+    const select = document.getElementById('columnSelect');
+    const numericOptions = select.querySelectorAll('.numeric-column');
+    const categoricalOptions = select.querySelectorAll('.categorical-column');
+    
+    // Clear current selection
+    select.selectedIndex = -1;
+    
+    if (type === 'numeric') {
+        numericOptions.forEach(opt => opt.style.display = '');
+        categoricalOptions.forEach(opt => opt.style.display = 'none');
+    } else if (type === 'categorical') {
+        numericOptions.forEach(opt => opt.style.display = 'none');
+        categoricalOptions.forEach(opt => opt.style.display = '');
+    }
+}
+
+// used to retrieve the value of a specific cookie by its name
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function updateColumnStats() {
+    const selectedColumns = Array.from(document.getElementById('columnSelect').selectedOptions).map(opt => opt.value);
+    if (selectedColumns.length === 0) {
+        alert('Please select at least one column');
+        return;
+    }
+
+    fetch('', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            action: 'analyze_columns',
+            columns: selectedColumns
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+        document.querySelector('#numerical .table-responsive').innerHTML = data.numerical;
+        document.querySelector('#categorical .table-responsive').innerHTML = data.categorical;
+        document.querySelector('#missing .table-responsive').innerHTML = data.missing_values;
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function updateRowStats() {
+    const rowRange = document.getElementById('rowRange').value;
+
+    fetch('', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            action: 'analyze_rows',
+            row_range: rowRange
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+        document.querySelector('#numerical .table-responsive').innerHTML = data.numerical;
+        document.querySelector('#categorical .table-responsive').innerHTML = data.categorical;
+        document.querySelector('#missing .table-responsive').innerHTML = data.missing_values;
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+// Initialize column visibility for numerical tab on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateColumnVisibility('numeric');
+});
+</script>
+{% endblock %}

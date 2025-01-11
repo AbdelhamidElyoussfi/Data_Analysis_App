@@ -1,0 +1,21 @@
+<!-- home.html -->
+{% extends 'base.html' %}
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="display-4 mb-4">Data Analysis Dashboard</h1>
+    <p class="lead mb-5">Upload your dataset and discover insights through statistics and visualizations</p>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-upload fa-3x mb-3 text-primary"></i>
+                    <h5 class="card-title">Upload Data</h5>
+                    <p class="card-text">Upload your CSV file to begin analysis</p>
+                    <a href="{% url 'upload' %}" class="btn btn-custom">Start Upload</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

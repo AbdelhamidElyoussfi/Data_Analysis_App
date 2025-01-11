@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <h2 class="card-title mb-4">
+            <i class="fas fa-chart-bar me-2"></i>Data Visualization
+        </h2>
+        
+        <form method="post" class="mb-4" id="vizForm">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Plot Type</label>
+                        <div class="card">
+                            <div class="card-header">
+                                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" data-bs-toggle="tab" href="#plots" role="tab">Plot Types</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-bs-toggle="tab" href="#auto" role="tab">Auto-Analysis</a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="card-body">
+                                <div class="tab-content">
+                                    <div class="tab-pane fade show active" id="plots">
+                                        <select name="plot_type" class="form-select" id="plotType">
+                                            <optgroup label="Numeric Plots">
+                                                {% for plot in numeric_plots %}
+                                                <option value="{{ plot }}" data-type="numeric">{{ plot|title }} Plot</option>
+                                                {% endfor %}
+                                            </optgroup>
+                                            <optgroup label="Categorical Plots">
+                                                {% for plot in categorical_plots %}
+                                                <option value="{{ plot }}" data-type="categorical">{{ plot|title }} Plot</option>
+                                                {% endfor %}
+                                            </optgroup>
+                                        </select>
+                                    </div>
+                                    <div class="tab-pane fade" id="auto">
+                                        <select name="plot_type" class="form-select" id="autoPlotType" disabled>
+                                            {% for plot in auto_plots %}
+                                            <option value="{{ plot }}" data-type="auto">{{ plot|title }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-8" id="columnsSection">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Select Columns</label>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="columns-container" style="max-height: 200px; overflow-y: auto;">
+                                    {% for column in numeric_columns %}
+                                    <div class="form-check numeric-column">
+                                        <input type="checkbox" name="columns" value="{{ column }}" 
+                                               class="form-check-input">
+                                        <label class="form-check-label">{{ column }}</label>
+                                    </div>
+                                    {% endfor %}
+                                    {% for column in categorical_columns %}
+                                    <div class="form-check categorical-column" style="display: none;">
+                                        <input type="checkbox" name="columns" value="{{ column }}" 
+                                               class="form-check-input">
+                                        <label class="form-check-label">{{ column }}</label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" id="generateBtn">
+                <i class="fas fa-paint-brush me-2"></i>Generate Plot
+            </button>
+        </form>
+        
+        <div id="plotContainer" class="mt-4" style="display: none;">
+            <div class="card">
+                <div class="card-header d-flex justify-content-end align-items-center">
+                    <div class="btn-group">
+                        <button class="btn btn-outline-secondary btn-sm" id="zoomIn">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" id="zoomOut">
+                            <i class="fas fa-search-minus"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" id="resetZoom">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body text-center">
+                    <div id="plotWrapper" style="overflow: auto;">
+                        <img id="plotImage" src="" class="img-fluid" alt="Data Visualization" style="max-width: 100%; height: auto;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('vizForm');
+        const plotContainer = document.getElementById('plotContainer');
+        const plotImage = document.getElementById('plotImage');
+        const columnsSection = document.getElementById('columnsSection');
+        const plotType = document.getElementById('plotType');
+        
+        // Zoom functionality
+        const zoomIn = document.getElementById('zoomIn');
+        const zoomOut = document.getElementById('zoomOut');
+        const resetZoom = document.getElementById('resetZoom');
+        const plotWrapper = document.getElementById('plotWrapper');
+        
+        let currentZoom = 1;
+        const zoomFactor = 1.2;
+        const minZoom = 0.5;
+        const maxZoom = 4;
+        
+        function updateZoom() {
+            plotImage.style.transform = `scale(${currentZoom})`;
+        }
+        
+        zoomIn.addEventListener('click', () => {
+            if (currentZoom < maxZoom) {
+                currentZoom *= zoomFactor;
+                updateZoom();
+            }
+        });
+        
+        zoomOut.addEventListener('click', () => {
+            if (currentZoom > minZoom) {
+                currentZoom /= zoomFactor;
+                updateZoom();
+            }
+        });
+        
+        resetZoom.addEventListener('click', () => {
+            currentZoom = 1;
+            updateZoom();
+        });
+        
+        // Add mouse wheel zoom support
+        plotWrapper.addEventListener('wheel', (e) => {
+            if (e.ctrlKey) {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? -1 : 1;
+                const newZoom = currentZoom * (1 + delta * 0.1);
+                
+                if (newZoom >= minZoom && newZoom <= maxZoom) {
+                    currentZoom = newZoom;
+                    updateZoom();
+                }
+            }
+        });
+        
+        document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function(e) {
+                const targetId = e.target.getAttribute('href');
+                document.querySelectorAll('.tab-pane select').forEach(select => {
+                    select.disabled = true;
+                    select.name = '';
+                });
+                
+                const activeSelect = document.querySelector(`${targetId} select`);
+                if (activeSelect) {
+                    activeSelect.disabled = false;
+                    activeSelect.name = 'plot_type';
+                    updateColumnVisibility(activeSelect.value);
+                }
+            });
+        });
+        
+        function updateColumnVisibility(plotType) {
+            const selectedOption = document.querySelector(`option[value="${plotType}"]`);
+            const plotDataType = selectedOption ? selectedOption.getAttribute('data-type') : 'numeric';
+            
+            const isAutoPlot = ['pairplot', 'heatmap'].includes(plotType);
+            columnsSection.style.display = isAutoPlot ? 'none' : 'block';
+            
+            if (isAutoPlot) return;
+            
+            document.querySelectorAll('.numeric-column').forEach(el => {
+                el.style.display = plotDataType === 'numeric' ? 'block' : 'none';
+            });
+            document.querySelectorAll('.categorical-column').forEach(el => {
+                el.style.display = plotDataType === 'categorical' ? 'block' : 'none';
+            });
+            
+            document.querySelectorAll('input[name="columns"]').forEach(cb => cb.checked = false);
+        }
+        
+        plotType.addEventListener('change', function() {
+            updateColumnVisibility(this.value);
+        });
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            fetch('', {
+                method: 'POST',
+                body: new FormData(form),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                // Reset zoom when loading new plot
+                currentZoom = 1;
+                updateZoom();
+                // Use the base64-encoded plot from the response
+                plotImage.src = "data:image/png;base64," + data.plot_base64;
+                plotContainer.style.display = 'block';
+                plotContainer.scrollIntoView({ behavior: 'smooth' });
+            })
+            .catch(error => {
+                alert("Error: " + error.message);
+            });
+        });
+        
+        updateColumnVisibility(plotType.value);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <h2 class="card-title mb-4">
+            <i class="fas fa-upload me-2"></i>Upload Dataset
+        </h2>
+        
+        <form method="post" enctype="multipart/form-data" class="mb-4" id="uploadForm">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">Select CSV File</label>
+                <input type="file" name="file" class="form-control" accept=".csv" required>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-upload me-2"></i>Upload
+            </button>
+        </form>
+
+        {% if preview %}
+        <div class="mt-4">
+            <h3 class="mb-3">Dataset Preview</h3>
+            
+            <!-- Data Navigation Controls -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text">Rows per page</span>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="rowsPerPageButton">
+                                10
+                            </button>
+                            <ul class="dropdown-menu" id="rowsPerPageDropdown">
+                                <li><a class="dropdown-item" href="#" data-value="10">10</a></li>
+                                <li><a class="dropdown-item" href="#" data-value="25">25</a></li>
+                                <li><a class="dropdown-item" href="#" data-value="50">50</a></li>
+                                <li><a class="dropdown-item" href="#" data-value="100">100</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text">Go to row</span>
+                        <input type="number" class="form-control" id="jumpToRow" min="0">
+                        <button class="btn btn-primary" id="jumpButton">Go</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column Visibility Toggle -->
+            <div class="mb-3">
+                <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#columnToggle">
+                    <i class="fas fa-columns me-2"></i>Toggle Columns
+                </button>
+                <div class="collapse mt-2" id="columnToggle">
+                    <div class="card card-body">
+                        <div class="column-toggles">
+                            {% for column in columns %}
+                            <div class="column-toggle-item">
+                                <div class="form-check">
+                                    <input class="form-check-input column-toggle" type="checkbox" value="{{ column }}" id="col_{{ forloop.counter }}">
+                                    <label class="form-check-label" for="col_{{ forloop.counter }}">
+                                        {{ column }}
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <div id="tableContainer">
+                    {{ preview|safe }}
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div>
+                    Showing <span id="startRow">1</span> to <span id="endRow">10</span> of <span id="totalRows">{{ total_rows }}</span> rows
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="prevPage"><i class="fas fa-chevron-left"></i></button>
+                    <button class="btn btn-primary" id="nextPage"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    :root {
+        --primary-color: #2563eb;
+        --primary-hover: #1d4ed8;
+        --background-light: #f8fafc;
+        --border-color: #e2e8f0;
+    }
+
+    /* Add these styles to your existing CSS */
+    .column-toggles {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .column-toggle-item {
+        padding: 8px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .column-toggle-item:last-child {
+        border-bottom: none;
+    }
+
+    .column-divider {
+        border: 1px solid var(--border-color);
+        margin: 8px 0;
+    }
+
+    /* Table styles for vertical alignment and index */
+    .table th,
+    .table td {
+        vertical-align: middle !important;
+        text-align: left !important;
+        padding: 12px !important;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    /* Index column styling */
+    .table thead tr th:first-child,
+    .table tbody tr td:first-child {
+        background-color: #f8f9fa;
+        font-weight: 500;
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        border-right: 2px solid #dee2e6;
+    }
+
+    /* Ensure table cells don't wrap */
+    .table td, 
+    .table th {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    let currentPage = 1;
+    let rowsPerPage = 10;
+    let totalRows = parseInt(document.getElementById('totalRows')?.textContent || '0');
+
+    function fetchData(params = {}) {
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', csrfToken);
+        
+        Object.entries(params).forEach(([key, value]) => {
+            if (Array.isArray(value)) {
+                value.forEach(val => formData.append(`${key}[]`, val));
+            } else {
+                formData.append(key, value);
+            }
+        });
+
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+            document.getElementById('tableContainer').innerHTML = data.data;
+            totalRows = data.total_rows;
+            document.getElementById('totalRows').textContent = totalRows;
+            updatePaginationInfo();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while fetching data. Please try again.');
+        });
+    }
+
+    function updatePaginationInfo() {
+        const start = (currentPage - 1) * rowsPerPage + 1;
+        const end = Math.min(start + rowsPerPage - 1, totalRows);
+        
+        document.getElementById('startRow').textContent = start;
+        document.getElementById('endRow').textContent = end;
+
+        document.getElementById('prevPage').disabled = currentPage === 1;
+        document.getElementById('nextPage').disabled = end >= totalRows;
+    }
+
+    function getSelectedColumns() {
+        const selectedColumns = Array.from(document.querySelectorAll('.column-toggle:checked'))
+            .map(checkbox => checkbox.value);
+        return selectedColumns.length > 0 ? selectedColumns : [];
+    }
+
+    document.getElementById('rowsPerPageDropdown')?.addEventListener('click', function(e) {
+        if (e.target.classList.contains('dropdown-item')) {
+            e.preventDefault();
+            rowsPerPage = parseInt(e.target.getAttribute('data-value'));
+            document.getElementById('rowsPerPageButton').textContent = rowsPerPage;
+            currentPage = 1;
+            fetchData({
+                start_row: 0,
+                num_rows: rowsPerPage,
+                columns: getSelectedColumns()
+            });
+        }
+    });
+
+    document.getElementById('jumpButton')?.addEventListener('click', function() {
+        const rowInput = document.getElementById('jumpToRow');
+        const rowNum = parseInt(rowInput.value);
+        if (!isNaN(rowNum) && rowNum >= 0 && rowNum < totalRows) {
+            fetchData({
+                specific_row: rowNum,
+                columns: getSelectedColumns()
+            });
+        } else {
+            alert('Please enter a valid row number between 0 and ' + (totalRows - 1));
+            rowInput.value = '';
+        }
+    });
+
+    document.getElementById('prevPage')?.addEventListener('click', function() {
+        if (currentPage > 1) {
+            currentPage--;
+            fetchData({
+                start_row: (currentPage - 1) * rowsPerPage,
+                num_rows: rowsPerPage,
+                columns: getSelectedColumns()
+            });
+        }
+    });
+
+    document.getElementById('nextPage')?.addEventListener('click', function() {
+        if (currentPage * rowsPerPage < totalRows) {
+            currentPage++;
+            fetchData({
+                start_row: (currentPage - 1) * rowsPerPage,
+                num_rows: rowsPerPage,
+                columns: getSelectedColumns()
+            });
+        }
+    });
+
+    document.querySelectorAll('.column-toggle').forEach((checkbox) => {
+        checkbox.checked = false;
+        checkbox.addEventListener('change', function() {
+            fetchData({
+                start_row: (currentPage - 1) * rowsPerPage,
+                num_rows: rowsPerPage,
+                columns: getSelectedColumns()
+            });
+        });
+    });
+
+    if (document.getElementById('totalRows')) {
+        updatePaginationInfo();
+    }
+});
+</script>
+{% endblock %}
