@@ -1,98 +1,132 @@
-<<<<<<< HEAD
 # Data Analysis Application
 
-## Overview
-This application is designed for comprehensive data analysis, providing users with a preview of their datasets, statistical summaries, and advanced visualizations. It is built to be user-friendly while offering robust functionalities for data scientists, analysts, and business users.
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Python](https://img.shields.io/badge/python-3.x-blue)
+![Django](https://img.shields.io/badge/django-latest-green)
+
+A Django-based web application for data analysis and visualization, providing an intuitive interface for users to upload, analyze, and visualize their datasets.
+
+## Project Structure
+```
+data_analysis_app/
+├── data_an_project/        # Django project settings
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+├── media/                  # Media files storage
+│   ├── plots/             # Generated visualization plots
+│   └── uploads/           # Uploaded datasets
+├── py_project/            # Main Django application
+│   ├── migrations/        # Database migrations
+│   ├── templates/         # HTML templates
+│   │   ├── base.html
+│   │   ├── home.html
+│   │   ├── statistics.html
+│   │   ├── upload.html
+│   │   └── visualization.html
+│   ├── __init__.py
+│   ├── admin.py          # Admin interface configuration
+│   ├── apps.py           # App configuration
+│   ├── forms.py          # Form definitions
+│   ├── models.py         # Database models
+│   ├── tests.py          # Unit tests
+│   ├── urls.py           # URL routing
+│   └── views.py          # View logic
+└── requirements.txt       # Project dependencies
+```
 
 ## Features
-- **Dataset Preview**: Quickly view the first few rows of your dataset to understand its structure.
-- **Statistical Summary**: Get key statistics such as mean, median, standard deviation, and more.
-- **Data Visualization**: Generate charts and graphs to uncover patterns and insights.
-- **User Interface**: An intuitive interface for seamless navigation and analysis.
+- **Dataset Management**
+  - Upload and store datasets
+  - Preview data contents
+  - Basic data cleaning options
+
+- **Statistical Analysis**
+  - Descriptive statistics
+  - Data distribution analysis
+  - Correlation analysis
+
+- **Data Visualization**
+  - Various chart types (line, bar, scatter, etc.)
+  - Customizable plot parameters
+  - Export visualization as images
+
+## Technology Stack
+- **Backend:** Django
+- **Frontend:** HTML, CSS, JavaScript
+- **Data Processing:** Pandas, NumPy
+- **Visualization:** Matplotlib, Seaborn
+- **Database:** SQLite (default) / PostgreSQL (optional)
 
 ## Installation
-To use this application, follow the steps below:
 
 1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   ```
+```bash
+git clone <repository-url>
+cd data_analysis_app
+```
 
-2. Navigate to the project directory:
-   ```bash
-   cd <project-directory>
-   ```
+2. Create a virtual environment and activate it:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
 
-3. Install the required dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-4. Run the application:
-   ```bash
-   python app.py
-   ```
+4. Apply database migrations:
+```bash
+python manage.py migrate
+```
+
+5. Create a superuser (admin):
+```bash
+python manage.py createsuperuser
+```
+
+6. Run the development server:
+```bash
+python manage.py runserver
+```
+
+The application will be available at `http://127.0.0.1:8000/`
 
 ## Usage
-1. Launch the application by running the command above.
-2. Upload your dataset (CSV format).
-3. Use the menu options to:
-   - Preview the dataset.
-   - View statistical summaries.
-   - Generate visualizations such as bar charts, line plots, scatter plots, and more.
+1. Log in to the application
+2. Upload your dataset (CSV format supported)
+3. Navigate through the available options:
+   - View basic statistics
+   - Generate visualizations
+   - Export results
 
-## Dependencies
-This application is built with the following libraries and frameworks:
-- **Pandas**: For data manipulation and analysis.
-- **NumPy**: For numerical computations.
-- **Matplotlib**: For static, animated, and interactive visualizations.
-- **Seaborn**: For statistical data visualization.
-- **Flask** (or Streamlit): For creating the user interface (specify which one is used).
+## Development
 
-## File Structure
-```
-project-directory/
-|
-|-- app.py                  # Main application file
-|-- requirements.txt        # List of dependencies
-|-- templates/              # HTML templates (if applicable)
-|-- static/                 # Static assets (CSS, JS, images)
-|-- README.md               # Project documentation
+### Running Tests
+```bash
+python manage.py test
 ```
 
-## Future Enhancements
-- Adding support for additional file formats (e.g., Excel, JSON).
-- Advanced statistical tests and machine learning integration.
-- Exporting results and visualizations.
+### Making Migrations
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
 
 ## Contributing
-Contributions are welcome! If you'd like to contribute, please:
-1. Fork the repository.
-2. Create a feature branch:
-   ```bash
-   git checkout -b feature-name
-   ```
-3. Commit your changes:
-   ```bash
-   git commit -m "Add feature-name"
-   ```
-4. Push to the branch:
-   ```bash
-   git push origin feature-name
-   ```
-5. Open a pull request.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/YourFeature`)
+3. Commit your changes (`git commit -m 'Add YourFeature'`)
+4. Push to the branch (`git push origin feature/YourFeature`)
+5. Open a Pull Request
 
 ## License
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Contact
-For any questions or support, please contact:
 - Email: [your-email@example.com]
 - GitHub: [your-github-username]
-
----
-Thank you for using this Data Analysis Application! Your feedback is valuable for further improvements.
-
-=======
-# Data_Analysis_App
->>>>>>> 8d812edf03e06c7f6082504474a5657c91a12ec4
